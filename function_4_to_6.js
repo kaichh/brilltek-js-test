@@ -1,38 +1,41 @@
-// Helper function for function 4
-const employeeTypeWorkingHours = (type) => {
+// Helper function: Convert time string to Date object
+const stringToDate = (timeString) => {
+  const timeList = timeString.split(":");
+  const date = new Date();
+  date.setHours(parseInt(timeList[0], 10));
+  date.setMinutes(parseInt(timeList[1], 10));
+  date.setSeconds(parseInt(timeList[2], 10));
+  return date;
+};
+
+// Helper function: Get begin and end working hours of an employee type
+const beginEndDate = (type) => {
   const eType = employeeType.find((et) => et.id === type);
-  const begin = new Date(`2023-05-13 ${eType.work_begin}`);
-  const end = new Date(`2023-05-13 ${eType.work_end}`);
-  const diff = end.getHours() - begin.getHours();
-  return diff < 0 ? 24 + diff : diff;
+  const begin = stringToDate(eType.work_begin);
+  const end = stringToDate(eType.work_end);
+  if (end.getHours() < begin.getHours()) {
+    end.setDate(end.getDate() + 1);
+  }
+  return [begin, end];
 };
 
 // 4. Count total working hours worked in 1 day
 const workingHoursInOneDay = (employees) => {
-  result = 0;
+  let result = 0;
   employees.forEach((employee) => {
-    result += employeeTypeWorkingHours(employee.type);
+    const begin = beginEndDate(employee.type)[0];
+    const end = beginEndDate(employee.type)[1];
+    result += Math.round((end.getTime() - begin.getTime()) / 1000 / 60 / 60);
   });
   return result;
 };
 
 // 5. Given a time, return the number of employees working at that time
 const employeesWorkingAtThisTime = (timeString) => {
-  const time = new Date(`2023-05-13 ${timeString}`);
+  const time = stringToDate(timeString);
   return employees.filter((employee) => {
-    const begin = new Date(
-      `2023-05-13 ${
-        employeeType.find((et) => et.id === employee.type).work_begin
-      }`
-    );
-    const end = new Date(
-      `2023-05-13 ${
-        employeeType.find((et) => et.id === employee.type).work_end
-      }`
-    );
-    if (end.getHours() < begin.getHours()) {
-      end.setDate(end.getDate() + 1);
-    }
+    const begin = beginEndDate(employee.type)[0];
+    const end = beginEndDate(employee.type)[1];
     return time >= begin && time <= end;
   }).length;
 };
